@@ -56,7 +56,6 @@ impl Library {
 
         fs::write(cfg_file, lib_snapshot_ser)?;
         Ok(lib_snapshot)
-
     }
 
     pub fn uninit(self) -> Result<()>{
