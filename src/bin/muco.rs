@@ -1,7 +1,10 @@
 #[macro_use]
 extern crate clap;
+extern crate muco;
+extern crate walkdir;
 
-use clap::{App, Arg, SubCommand};
+use clap::{App, Arg, SubCommand} ;
+use muco::library::Library;
 
 fn main() {
     let matches = App::new("Muco")
@@ -13,7 +16,14 @@ fn main() {
                     .alias("lib")
                     .subcommand(SubCommand::with_name("init")
                                 .about("Initialize library")
-                                .alias("in"))
+                                .alias("in")
+                                .arg(Arg::with_name("exclude")
+                                     .short("e")
+                                     .long("exclude")
+                                     .value_name("DIRS")
+                                     .takes_value(true)
+                                     .multiple(true)
+                                     .help("Exclude directories")))
 
                     .subcommand(SubCommand::with_name("uninit")
                                 .about("Uninitialize/Remove library")
@@ -40,5 +50,41 @@ fn main() {
 
         .get_matches();
 
-    println!("{:?}", matches);
+    if let Some(matches) = matches.subcommand_matches("library") {
+        if let Some(matches) = matches.subcommand_matches("init") {
+            println!("Detected lib init");
+
+            let exclude_folders = match matches.values_of("exclude") {
+                Some(excl) => excl.into_iter().map(|file| String::from(file)).collect::<Vec<_>>(),
+                None => vec![],
+            };
+
+            // let exclude_folders = matches.values_of("exclude").unwrap()
+
+            println!("something is : {:?}", exclude_folders);
+            Library::init(Some(exclude_folders)).unwrap();
+        }
+
+        if let Some(_matches) = matches.subcommand_matches("uninit") {
+            println!("Detected lib uninit");
+        }
+
+        if let Some(_matches) = matches.subcommand_matches("update") {
+            println!("Detected lib update");
+        }
+    } else {
+        if let Some(_matches) = matches.subcommand_matches("device") {
+            if let Some(_matches) = matches.subcommand_matches("init") {
+                println!("Detected dev init");
+            }
+
+            if let Some(_matches) = matches.subcommand_matches("uninit") {
+                println!("Detected dev uninit");
+            }
+
+            if let Some(_matches) = matches.subcommand_matches("sync") {
+                println!("Detected dev sync");
+            }
+        }
+    }
 }

@@ -1,6 +1,7 @@
 //! Errors Module
 
 use serde_yaml;
+use walkdir;
 
 #[derive(Fail, Debug)]
 pub enum MucoError {
@@ -15,6 +16,9 @@ pub enum MucoError {
 
     #[fail(display = "Corrupt Library Error")]
     Library,
+
+    #[fail(display = "Unknown Error")]
+    Unknown,
 }
 
 impl From<serde_yaml::Error> for MucoError {
@@ -28,4 +32,11 @@ impl From<::std::io::Error> for MucoError {
         MucoError::Io(e)
     }
 }
+
+impl From<walkdir::Error> for MucoError {
+    fn from(_e: walkdir::Error) -> Self {
+        MucoError::Library
+    }
+}
+
 pub type Result<T> = ::std::result::Result<T, MucoError>;

@@ -5,8 +5,11 @@ extern crate failure_derive;
 extern crate serde_derive;
 extern crate serde;
 extern crate serde_yaml;
+extern crate walkdir;
 
-#[derive(Serialize, Deserialize)]
+use std::str::FromStr;
+
+#[derive(Serialize, Deserialize, Debug)]
 pub enum AudFmt {
     Aac,
     Flac,
@@ -14,6 +17,20 @@ pub enum AudFmt {
     Wma,
 }
 
-mod errors;
-mod library;
-mod device;
+impl FromStr for AudFmt {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<AudFmt, ()> {
+        match s.to_lowercase().as_str() {
+            "aac" => Ok(AudFmt::Aac),
+            "flac" => Ok(AudFmt::Flac),
+            "mp3" => Ok(AudFmt::Mp3),
+            "wma" => Ok(AudFmt::Wma),
+            _ => Err(()),
+        }
+    }
+}
+
+pub mod errors;
+pub mod library;
+pub mod device;
