@@ -9,7 +9,7 @@ extern crate walkdir;
 
 use std::str::FromStr;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum AudFmt {
     Aac,
     Flac,

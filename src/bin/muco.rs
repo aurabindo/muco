@@ -67,10 +67,12 @@ fn main() {
 
         if let Some(_matches) = matches.subcommand_matches("uninit") {
             println!("Detected lib uninit");
+            let _res = Library::uninit();
         }
 
         if let Some(_matches) = matches.subcommand_matches("update") {
             println!("Detected lib update");
+            let _res = Library::update();
         }
     } else {
         if let Some(_matches) = matches.subcommand_matches("device") {

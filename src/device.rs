@@ -9,7 +9,7 @@ pub struct Device {
     pub capacity: usize,
     pub audio_formats: Vec<AudFmt>,
     // Index of the copied files
-    index: HashMap<PathBuf, AudFmt>,
+    pub index: HashMap<PathBuf, AudFmt>,
 }
 
 impl Device {

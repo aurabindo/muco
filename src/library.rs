@@ -12,10 +12,9 @@ use super::AudFmt;
 
 static LIB_FILE: &'static str = "library.conf";
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Library {
     pub count: u32,
-    pub size: usize,
     pub exclude: Vec<String>,
     index: HashMap<String, Vec<AudFmt>>,
 }
@@ -30,8 +29,9 @@ fn validate_library(lib: &Library) -> Result<()>{
     Ok(())
 }
 
-fn visit_dirs(ex: Vec<String>) -> Result<HashMap<String,Vec<AudFmt>>>{
+fn visit_dirs(ex: Vec<String>) -> Result<Library>{
     let mut file_db: HashMap<String, Vec<AudFmt>> = HashMap::new();
+    let mut count: u32 = 0;
 
     for entry in WalkDir::new(".").into_iter()
         .filter(|ref s| s.is_ok()) {// Get rid of any items with permission errors
@@ -41,6 +41,7 @@ fn visit_dirs(ex: Vec<String>) -> Result<HashMap<String,Vec<AudFmt>>>{
 
             if file_name.as_str().starts_with(".") // Ignore hidden items
                 || ex.iter().any(|exs| path.as_str().split('/').collect::<Vec<_>>().contains(&exs.as_str())) // Ignore files from excluded path
+                || path.as_str().split("./").any(|item| item.starts_with('.')) //ignore if any part of the path contains hidden files
                 || file_name.as_str().split('.').count() < 2 { //There must be atleast 1 dot in the file name
                     continue;
                 } else {
@@ -54,10 +55,15 @@ fn visit_dirs(ex: Vec<String>) -> Result<HashMap<String,Vec<AudFmt>>>{
                         } else {
                             file_db.insert(path, vec![fmt]);
                         }
+                        count += 1;
                     }
                 }
         }
-    Ok(file_db)
+    Ok(Library {
+        count: count,
+        exclude: ex,
+        index: file_db,
+    })
 }
 
 impl Library {
@@ -88,7 +94,7 @@ impl Library {
         Ok(())
     }
 
-    pub fn uninit(self) -> Result<()>{
+    pub fn uninit() -> Result<()>{
         if Path::new("./.muco").exists() {
             fs::remove_dir_all("./.muco")?
         }
@@ -96,6 +102,43 @@ impl Library {
         Ok(())
     }
 
-    pub fn update(self) {
+    pub fn update() -> Result<()> {
+        let cfg_file = format!("./.muco/{}", LIB_FILE);
+
+        if !Path::new(cfg_file.as_str()).exists() {
+            println!("Sit before you stretch your leg ;)");
+            println!("Didnt get it? Initialize the library first!");
+        } else {
+            let yaml_string = fs::read_to_string(Path::new(&cfg_file));
+            let file_lib: Library = serde_yaml::from_str(yaml_string?.as_str())?;
+            let disk_lib = visit_dirs(file_lib.exclude.clone())?;
+            let disk_db = disk_lib.index.clone();
+            let file_db = file_lib.index.clone();
+
+
+            let missing_path: Vec<_> = disk_db.keys()
+                .filter(|f| !file_db.contains_key(f.as_str()))
+                .collect();
+
+            println!("Missing paths: {:?}", missing_path);
+
+            if missing_path.len() > 0 {
+                let new_config: Library = Library {
+                    count: disk_db.len() as u32,
+                    exclude: file_lib.exclude,
+                    index: disk_db.clone(),
+                };
+
+                fs::write(cfg_file, serde_yaml::to_string(&new_config)?)?;
+            } else {
+                // Inefficient hack: If it gets here, then either
+                // nothing has changed, or some previously indexed
+                // are missing. So reinit.
+                let excl = file_lib.exclude.clone();
+                Library::uninit()?;
+                Library::init(Some(excl))?;
+            }
+        }
+        Ok(())
     }
 }
