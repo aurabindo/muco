@@ -1,32 +1,120 @@
 //! Device Management
 
-use std::path::PathBuf;
-use std::collections::HashMap;
+use std::path::{PathBuf, Path};
+use std::fs;
+
+use serde_yaml;
+use errors::Result ;
+use errors::MucoError;
 
 use super::AudFmt;
 
+static DEV_DB: &'static str = ".muco.db";
+static MUCO_CFG: &'static str = "/home/aj/.mucorc";
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Device {
-    pub capacity: usize,
-    pub audio_formats: Vec<AudFmt>,
-    // Index of the copied files
-    pub index: HashMap<PathBuf, AudFmt>,
+    pub name: String,
+    pub location: PathBuf,
+    pub formats: Vec<AudFmt>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Config {
+    pub devices: Vec<Device>,
 }
 
 impl Device {
-    pub fn init() -> Device {
-        unimplemented!()
+    pub fn create(name: String, loc: PathBuf) -> Self {
+        Device {
+            name: name,
+            location: loc,
+            formats: vec![],
+        }
     }
 
-    pub fn uninit(self) {
-        unimplemented!()
+    pub fn rename (&mut self, new_name: String) {
+        self.name = new_name.into();
+    }
+}
+
+impl Config {
+    pub fn init() -> Result<Self> {
+        // Lets read the config file first
+        if !Path::new(MUCO_CFG).exists() {
+            return Ok(Config {
+                devices: vec![],
+            })
+        }
+
+        let known_dev: Config = serde_yaml::from_str(&fs::read_to_string(MUCO_CFG)?)?;
+
+        // Lets check if all the known devices exist currently.
+        // No need to write the new config to disk, since those devices
+        // that are absent, maybe plugged in later.
+        let available_dev: Vec<_> = known_dev.devices.into_iter()
+            .filter(|item| item.location.exists()) // discard if not mounted
+            .filter(|item| { // discard if not writeable
+                match fs::metadata(item.clone().location) {
+                    Ok(metadata) => !metadata.permissions().readonly(),
+                    Err(_) => false,
+                }
+            })
+            .collect();
+
+        let available = Config {
+            devices: available_dev,
+        };
+
+        Ok(available)
     }
 
-    pub fn validate_index(self) {
-        unimplemented!()
+    pub fn add_device(&mut self, dev: &Device) -> Result<()> {
+        if self.devices.iter()
+            .filter(|item| item.name.eq(&dev.name))
+            .count() > 0 {
+                Err(MucoError::DuplicateDevcie)
+            } else {
+            self.devices.push(dev.clone());
+            update_config(&self)?;
+
+            Ok(())
+        }
     }
 
-    // Synchronize the Library with this device
-    pub fn sync(self) {
-        unimplemented!()
+    pub fn list_devices(&self) -> Result<()> {
+        println!("Current devices:\n{:?}", self);
+        Ok(())
     }
+
+    pub fn remove_device(&mut self, name: &String) -> Result<()>{
+        let removed = self.devices.iter()
+            .position(|item| item.name.eq(name))
+            .map(|item| self.devices.remove(item))
+            .is_some();
+
+        if removed {
+            update_config(&self)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn sync(&self, dev: &Device) -> Result<()> {
+        println!("Total number of devices to sync: {:?}", self.devices.len());
+
+        Ok(())
+    }
+}
+
+fn update_config(dev: &Config) -> Result<()> {
+    if Path::new(MUCO_CFG).exists() {
+        fs::remove_file(MUCO_CFG)?;
+    }
+
+    let to_write = serde_yaml::to_string(dev)?;
+    println!("About to write:\n{:?}\nto {:?}", to_write, MUCO_CFG);
+    fs::write(MUCO_CFG, to_write)?;
+
+    Ok(())
 }

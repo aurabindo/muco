@@ -19,6 +19,9 @@ pub enum MucoError {
 
     #[fail(display = "Unknown Error")]
     Unknown,
+
+    #[fail(display = "Duplicate device being manipulated")]
+    DuplicateDevcie,
 }
 
 impl From<serde_yaml::Error> for MucoError {
