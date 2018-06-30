@@ -2,12 +2,14 @@
 
 use std::path::{PathBuf, Path};
 use std::fs;
+use std::collections::HashMap;
 
 use serde_yaml;
 use errors::Result ;
 use errors::MucoError;
 
 use super::AudFmt;
+use super::library::Library;
 
 static DEV_DB: &'static str = ".muco.db";
 static MUCO_CFG: &'static str = "/home/aj/.mucorc";
@@ -102,9 +104,68 @@ impl Config {
 
     pub fn sync(&self, dev: &Device) -> Result<()> {
         println!("Total number of devices to sync: {:?}", self.devices.len());
+        let lib = Library::get()?;
 
-        Ok(())
+        if !Path::new(&format!("{}/{}", dev.location.display(), DEV_DB)).exists() {
+            dev_create_index_copy(dev, lib.clone())?;
+            return Ok(())
+        } else {
+            let dev_db_path = dev.location.clone().join(DEV_DB);
+            let mut existing_files: HashMap<String, ()> = serde_yaml::from_str(&fs::read_to_string(dev_db_path)?)?;
+
+
+            for (file, fmt) in lib.index.iter() {
+                if fmt.iter()
+                    .filter(|f| dev.formats.contains(f))
+                    .count() > 0 {
+                        if !existing_files.contains_key(file) {
+                            let path_for_parent = dev.location.join(file);
+                            let parent = path_for_parent.parent();
+
+                            if let Some(path) = parent {
+                                fs::create_dir_all(path)?;
+                                fs::copy(file, dev.location.join(file))?;
+                                existing_files.insert(file.to_string(), ());
+                                println!("{}: Copying: {}", dev.name, file);
+                            }
+                        }
+                    }
+            }
+
+            fs::write(dev.location.join(DEV_DB), serde_yaml::to_string(&existing_files)?)?;
+
+            Ok(())
+        }
     }
+}
+
+fn dev_create_index_copy(dev: &Device, l: Library) -> Result<()> {
+    let mut dev_file_index: HashMap<String, ()> = HashMap::new();
+
+    for (path, fmt) in l.index {
+            if fmt.iter()
+                .filter(|f| dev.formats.contains(f))
+                .count() > 0 {
+                    let to_path = dev.location.join(path.clone());
+                    let for_parent = to_path.clone();
+                    let from_path = path.clone();
+                    let to_path_parent = for_parent.parent();
+
+                    if let Some(path) = to_path_parent {
+                        fs::create_dir_all(path)?;
+                    }
+
+                    println!("{}: Copying {}", dev.name, from_path);
+                    fs::copy(path.clone(), to_path)?;
+
+                    dev_file_index.insert(from_path, ());
+                }
+    }
+
+    let dev_db_path = dev.location.join(DEV_DB);
+    fs::write(dev_db_path, serde_yaml::to_string(&dev_file_index)?)?;
+
+    Ok(())
 }
 
 fn update_config(dev: &Config) -> Result<()> {

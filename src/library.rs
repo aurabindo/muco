@@ -16,7 +16,7 @@ static LIB_FILE: &'static str = "library.conf";
 pub struct Library {
     pub count: u32,
     pub exclude: Vec<String>,
-    index: HashMap<String, Vec<AudFmt>>,
+    pub index: HashMap<String, Vec<AudFmt>>,
 }
 
 // In case there is an existing library
@@ -140,5 +140,17 @@ impl Library {
             }
         }
         Ok(())
+    }
+
+    pub fn get() -> Result<Library> {
+        let cfg_file = format!("./.muco/{}", LIB_FILE);
+
+        if !Path::new(cfg_file.as_str()).exists() {
+            Err(MucoError::Library)
+        } else {
+            let yaml_string = fs::read_to_string(Path::new(&cfg_file));
+            let res = serde_yaml::from_str::<Library>(yaml_string?.as_str())?;
+            Ok(res)
+        }
     }
 }

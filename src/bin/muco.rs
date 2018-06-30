@@ -84,7 +84,15 @@ fn main() {
 
                     .subcommand(SubCommand::with_name("sync")
                                 .about("Synchronize library with device")
-                                .alias("sy"))
+                                .alias("sy")
+                                .arg(Arg::with_name("name")
+                                     .short("n")
+                                     .long("name")
+                                     .value_name("NAME")
+                                     .takes_value(true)
+                                     .multiple(false)
+                                     .required(false)
+                                     .help("Name of the devices to be synchronized with the library")))
 
                     .subcommand(SubCommand::with_name("status")
                                 .about("Report status of all devices known")
@@ -113,6 +121,18 @@ fn main() {
         }
     } else {
         if let Some(matches) = matches.subcommand_matches("device") {
+            if let Some(_matches) = matches.subcommand_matches("sync") {
+                let names = match matches.values_of("name") {
+                    Some(excl) => excl.into_iter().map(|file| String::from(file)).collect::<Vec<_>>(),
+                    None => vec![],
+                };
+
+                match do_stuff_dev_sync(names) {
+                    Ok(_) => println!("Device sync succeeded"),
+                    Err(e) => println!("{:?}", e),
+                }
+            }
+
             if let Some(_matches) = matches.subcommand_matches("status") {
                 match do_stuff_list() {
                     Ok(_) => println!("Report device status succeeded"),
@@ -156,6 +176,21 @@ fn main() {
             }
         }
     }
+}
+
+fn do_stuff_dev_sync(n: Vec<String>) -> Result<()> {
+    let sys = Config::init()?;
+
+    let devs = sys.devices.iter()
+        .filter(|d| (n.len() == 0) || n.contains(&d.name))
+        .map(|s| s.clone())
+        .collect::<Vec<_>>();
+
+    for dev in devs {
+        sys.sync(&dev)?;
+    }
+
+    Ok(())
 }
 
 fn do_stuff_dev_remove(name: &String) -> Result<()> {
