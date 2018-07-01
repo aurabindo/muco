@@ -3,6 +3,7 @@
 use std::path::{PathBuf, Path};
 use std::fs;
 use std::collections::HashMap;
+use std::env;
 
 use serde_yaml;
 use errors::Result ;
@@ -12,7 +13,29 @@ use super::AudFmt;
 use super::library::Library;
 
 static DEV_DB: &'static str = ".muco.db";
-static MUCO_CFG: &'static str = "/home/aj/.mucorc";
+static MUCO_CFG: &'static str = "/.mucorc";
+
+macro_rules! muco_cfg_file {
+    () => {
+        {
+            let mut home = match env::var("HOME") {
+                Ok(path) => {
+                    println!("Got var: {:?}", path);
+                    path
+                },
+                Err(e) => {
+                    println!("Got err: {:?}", e);
+                    "./".to_string()
+                },
+            };
+
+            home.push_str(MUCO_CFG);
+            println!("Final path: {:?}", home);
+            home
+        }
+
+    };
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Device {
@@ -43,13 +66,13 @@ impl Device {
 impl Config {
     pub fn init() -> Result<Self> {
         // Lets read the config file first
-        if !Path::new(MUCO_CFG).exists() {
+        if !Path::new(&muco_cfg_file!()).exists() {
             return Ok(Config {
                 devices: vec![],
             })
         }
 
-        let known_dev: Config = serde_yaml::from_str(&fs::read_to_string(MUCO_CFG)?)?;
+        let known_dev: Config = serde_yaml::from_str(&fs::read_to_string(muco_cfg_file!())?)?;
 
         // Lets check if all the known devices exist currently.
         // No need to write the new config to disk, since those devices
@@ -169,13 +192,13 @@ fn dev_create_index_copy(dev: &Device, l: Library) -> Result<()> {
 }
 
 fn update_config(dev: &Config) -> Result<()> {
-    if Path::new(MUCO_CFG).exists() {
-        fs::remove_file(MUCO_CFG)?;
+    if Path::new(&muco_cfg_file!()).exists() {
+        fs::remove_file(muco_cfg_file!())?;
     }
 
     let to_write = serde_yaml::to_string(dev)?;
-    println!("About to write:\n{:?}\nto {:?}", to_write, MUCO_CFG);
-    fs::write(MUCO_CFG, to_write)?;
+    println!("About to write:\n{:?}\nto {:?}", to_write, muco_cfg_file!());
+    fs::write(muco_cfg_file!(), to_write)?;
 
     Ok(())
 }

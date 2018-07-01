@@ -2,6 +2,7 @@
 
 use serde_yaml;
 use walkdir;
+use std::env;
 
 #[derive(Fail, Debug)]
 pub enum MucoError {
@@ -22,6 +23,9 @@ pub enum MucoError {
 
     #[fail(display = "Duplicate device being manipulated")]
     DuplicateDevcie,
+
+    #[fail(display = "Systen Environment Error")]
+    SystemEnv,
 }
 
 impl From<serde_yaml::Error> for MucoError {
@@ -39,6 +43,12 @@ impl From<::std::io::Error> for MucoError {
 impl From<walkdir::Error> for MucoError {
     fn from(_e: walkdir::Error) -> Self {
         MucoError::Library
+    }
+}
+
+impl From<env::VarError> for MucoError {
+    fn from(_e: env::VarError) -> Self {
+        MucoError::SystemEnv
     }
 }
 
