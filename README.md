@@ -1,6 +1,6 @@
 # About
 
-Music COpier is a lame tool for synchronising audio files across portable mass storage devices that may be plugged into different music playback systems like car stereo, bluetooth speaker, etc.
+MUsic COpier is a lame tool for synchronising audio files across portable mass storage devices that may be plugged into different music playback systems like car stereo, bluetooth speaker, etc.
 
 # Why?
 
@@ -33,4 +33,14 @@ Now all you need to do, is:
 ```
 muco device sync
 ```
+
+# Todo
+
+At the moment this works only on Linux based OS. I have no intention of addding windows support.
+However, if you can, please do so and send a patch or a pull request.
+
+Other features to be added:
+
+* Automatic audio trascoding
+* Add logging framework instead of println! for debugging
 
