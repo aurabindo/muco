@@ -20,17 +20,14 @@ macro_rules! muco_cfg_file {
         {
             let mut home = match env::var("HOME") {
                 Ok(path) => {
-                    println!("Got var: {:?}", path);
                     path
                 },
                 Err(e) => {
-                    println!("Got err: {:?}", e);
                     "./".to_string()
                 },
             };
 
             home.push_str(MUCO_CFG);
-            println!("Final path: {:?}", home);
             home
         }
 
