@@ -101,8 +101,6 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("library") {
         if let Some(matches) = matches.subcommand_matches("init") {
-            println!("Detected lib init");
-
             let exclude_folders = match matches.values_of("exclude") {
                 Some(excl) => excl.into_iter().map(|file| String::from(file)).collect::<Vec<_>>(),
                 None => vec![],
@@ -112,7 +110,6 @@ fn main() {
         }
 
         if let Some(_matches) = matches.subcommand_matches("uninit") {
-            println!("Detected lib uninit");
             let _res = Library::uninit();
         }
 
