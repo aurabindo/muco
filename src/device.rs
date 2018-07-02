@@ -118,13 +118,13 @@ impl Config {
             return Ok(())
         } else {
             let dev_db_path = dev.location.clone().join(DEV_DB);
-            let mut existing_files: HashMap<String, ()> = serde_yaml::from_str(&fs::read_to_string(dev_db_path)?)?;
-            // let mut to_convert: HashMap<String, AudFmt> = HashMap::new();
+            let mut existing_files: HashMap<String, ()> = serde_yaml::from_str(&fs::read_to_string(dev_db_path.clone())?)?;
+
+            verify_dev_files(&mut existing_files, &dev.location);
 
             for (file, fmt) in lib.index.iter() {
                 for f in fmt {
                     if !dev.formats.contains(f) {
-                        // to_convert.insert(file.clone(), dev.formats.first().unwrap().clone());
                         convert_and_copy(file.clone(), dev.formats.first().unwrap().clone(), dev.location.clone(), dev.name.clone())?;
                         break;
                     }
@@ -155,6 +155,17 @@ impl Config {
     }
 }
 
+fn verify_dev_files(idx: &mut HashMap<String, ()>, file: &PathBuf) {
+    let to_remove: Vec<_> = idx.iter()
+        .filter(|&(f, _)| !file.join(f).exists())
+        .map(|(k, _)| k.clone())
+        .collect();
+
+    for item in to_remove {
+        &mut idx.remove(&item);
+    }
+}
+
 fn convert_and_copy(file: String, to_fmt: AudFmt, loc: PathBuf, name: String) -> Result<()> {
 
     let last_dot = file.as_str().rfind('.').unwrap_or(file.len());
@@ -172,18 +183,22 @@ fn convert_and_copy(file: String, to_fmt: AudFmt, loc: PathBuf, name: String) ->
 
     println!("{}: Converting & Copying {}", name, file);
 
-    let output = Command::new("ffmpeg")
-        .current_dir(".")
-        .arg("-i")
-        .arg(file.as_str())
-        .arg(loc.join(file_target))
-        .output()
-        .expect("Could not transcode");
+    if !loc.join(file_target.clone()).exists() {
+        let output = Command::new("ffmpeg")
+            .current_dir(".")
+            .arg("-i")
+            .arg(file.as_str())
+            .arg(loc.join(file_target))
+            .output()
+            .expect("Could not transcode");
 
-    if output.status.success() {
-        Ok(())
+        if output.status.success() {
+            Ok(())
+        } else {
+            Err(MucoError::Transcode)
+        }
     } else {
-        Err(MucoError::Transcode)
+        Ok(())
     }
 }
 
