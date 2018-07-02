@@ -22,7 +22,7 @@ macro_rules! muco_cfg_file {
                 Ok(path) => {
                     path
                 },
-                Err(e) => {
+                Err(_e) => {
                     "./".to_string()
                 },
             };
@@ -194,7 +194,6 @@ fn update_config(dev: &Config) -> Result<()> {
     }
 
     let to_write = serde_yaml::to_string(dev)?;
-    println!("About to write:\n{:?}\nto {:?}", to_write, muco_cfg_file!());
     fs::write(muco_cfg_file!(), to_write)?;
 
     Ok(())
