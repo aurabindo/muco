@@ -41,6 +41,6 @@ However, if you can, please do so and send a patch or a pull request.
 
 Other features to be added:
 
-* Automatic audio trascoding
+* Caching for audio trascoding
 * Add logging framework instead of println! for debugging
 
