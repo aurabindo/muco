@@ -18,14 +18,14 @@ pub enum MucoError {
     #[fail(display = "Corrupt Library Error")]
     Library,
 
-    #[fail(display = "Unknown Error")]
-    Unknown,
-
     #[fail(display = "Duplicate device being manipulated")]
     DuplicateDevcie,
 
-    #[fail(display = "Systen Environment Error")]
+    #[fail(display = "System Environment Error")]
     SystemEnv,
+
+    #[fail(display = "Audio Transcoding error")]
+    Transcode,
 }
 
 impl From<serde_yaml::Error> for MucoError {

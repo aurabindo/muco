@@ -4,6 +4,7 @@ use std::path::{PathBuf, Path};
 use std::fs;
 use std::collections::HashMap;
 use std::env;
+use std::process::Command;
 
 use serde_yaml;
 use errors::Result ;
@@ -132,9 +133,17 @@ impl Config {
         } else {
             let dev_db_path = dev.location.clone().join(DEV_DB);
             let mut existing_files: HashMap<String, ()> = serde_yaml::from_str(&fs::read_to_string(dev_db_path)?)?;
-
+            // let mut to_convert: HashMap<String, AudFmt> = HashMap::new();
 
             for (file, fmt) in lib.index.iter() {
+                for f in fmt {
+                    if !dev.formats.contains(f) {
+                        // to_convert.insert(file.clone(), dev.formats.first().unwrap().clone());
+                        convert_and_copy(file.clone(), dev.formats.first().unwrap().clone(), dev.location.clone(), dev.name.clone())?;
+                        break;
+                    }
+                }
+
                 if fmt.iter()
                     .filter(|f| dev.formats.contains(f))
                     .count() > 0 {
@@ -152,6 +161,7 @@ impl Config {
                     }
             }
 
+            // println!("To convert: {:?}", to_convert);
             fs::write(dev.location.join(DEV_DB), serde_yaml::to_string(&existing_files)?)?;
 
             Ok(())
@@ -159,27 +169,65 @@ impl Config {
     }
 }
 
+fn convert_and_copy(file: String, to_fmt: AudFmt, loc: PathBuf, name: String) -> Result<()> {
+
+    let last_dot = file.as_str().rfind('.').unwrap_or(file.len());
+
+    let file_name = &file.as_str()[..last_dot];
+
+    if let Some(parent) = Path::new(file_name).parent() {
+        fs::create_dir_all(loc.join(parent))?;
+    }
+
+    let mut file_target = String::from(file_name);
+
+    file_target.push_str(".");
+    file_target.push_str(to_fmt.as_ref());
+
+    println!("{}: Converting & Copying {}", name, file);
+
+    let output = Command::new("ffmpeg")
+        .current_dir(".")
+        .arg("-i")
+        .arg(file.as_str())
+        .arg(loc.join(file_target))
+        .output()
+        .expect("Could not transcode");
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(MucoError::Transcode)
+    }
+}
+
 fn dev_create_index_copy(dev: &Device, l: Library) -> Result<()> {
     let mut dev_file_index: HashMap<String, ()> = HashMap::new();
 
-    for (path, fmt) in l.index {
-            if fmt.iter()
-                .filter(|f| dev.formats.contains(f))
-                .count() > 0 {
-                    let to_path = dev.location.join(path.clone());
-                    let for_parent = to_path.clone();
-                    let from_path = path.clone();
-                    let to_path_parent = for_parent.parent();
+    for (path, fmt) in l.index.iter() {
+        for f in fmt {
+            if !dev.formats.contains(f) {
+                convert_and_copy(path.clone(), dev.formats.first().unwrap().clone(), dev.location.clone(), dev.name.clone())?;
+                break;
+            }
+        }
+        if fmt.iter()
+            .filter(|f| dev.formats.contains(f))
+            .count() > 0 {
+                let to_path = dev.location.join(path.clone());
+                let for_parent = to_path.clone();
+                let from_path = path.clone();
+                let to_path_parent = for_parent.parent();
 
-                    if let Some(path) = to_path_parent {
-                        fs::create_dir_all(path)?;
-                    }
-
-                    println!("{}: Copying {}", dev.name, from_path);
-                    fs::copy(path.clone(), to_path)?;
-
-                    dev_file_index.insert(from_path, ());
+                if let Some(path) = to_path_parent {
+                    fs::create_dir_all(path)?;
                 }
+
+                println!("{}: Copying {}", dev.name, from_path);
+                fs::copy(path.clone(), to_path)?;
+
+                dev_file_index.insert(from_path, ());
+            }
     }
 
     let dev_db_path = dev.location.join(DEV_DB);
