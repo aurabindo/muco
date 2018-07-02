@@ -47,20 +47,6 @@ pub struct Config {
     pub devices: Vec<Device>,
 }
 
-impl Device {
-    pub fn create(name: String, loc: PathBuf) -> Self {
-        Device {
-            name: name,
-            location: loc,
-            formats: vec![],
-        }
-    }
-
-    pub fn rename (&mut self, new_name: String) {
-        self.name = new_name.into();
-    }
-}
-
 impl Config {
     pub fn init() -> Result<Self> {
         // Lets read the config file first
