@@ -186,6 +186,7 @@ fn convert_and_copy(file: String, to_fmt: AudFmt, loc: PathBuf, name: String) ->
     if !loc.join(file_target.clone()).exists() {
         let output = Command::new("ffmpeg")
             .current_dir(".")
+            .arg("-vn")
             .arg("-i")
             .arg(file.as_str())
             .arg(loc.join(file_target))
