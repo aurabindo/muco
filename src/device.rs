@@ -186,9 +186,13 @@ fn convert_and_copy(file: String, to_fmt: AudFmt, loc: PathBuf, name: String) ->
     if !loc.join(file_target.clone()).exists() {
         let output = Command::new("ffmpeg")
             .current_dir(".")
-            .arg("-vn")
             .arg("-i")
             .arg(file.as_str())
+            .arg("-vn")
+            .arg("-codec:a")
+            .arg("libmp3lame")
+            .arg("-b")
+            .arg("320")
             .arg(loc.join(file_target))
             .output()
             .expect("Could not transcode");
