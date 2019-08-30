@@ -4,43 +4,34 @@ MUsic COpier is a lame tool for synchronising audio files across portable mass s
 
 # Why?
 
-Because I prefer to keep lossless formats of all audio in my laptop, which has the central library. My other players do not support flac sadly. Dear Honda, please add FLAC support to your car audio. I did not want to manually convert them and copy around. But this just happened to be a reason to learn some Rust.
-
-So, the real reason, is to learn Rust! :D But I must admit, the code in the current state, sucks. Suggestions to improve are more than welcome!
+Because I prefer to keep lossless formats of all audio in my laptop, which is the main library. My other players do not support flac sadly. I did not want to manually convert them and copy around, and I like Rust, so here we are.
 
 # Usage
 
-There are lots of unpolished areas, which I intent to improve. As of now, the
-You first need to navigate to the original source of your music, called library
-and initialize muco there.
+
+You can have multiple libraries on a system. You can add one like so:
 
 ```
-muco library init
+muco library add -n library_name -l /path/to/library
 ```
 
-Now time to tell where muco will find your devices: 
+Now time to tell where muco will find your devices. You can only specify one supported format as of now: 
 ```
-muco device add --name Sasi --format mp3 flac --location /run/media/aj/AURA
+muco device add --name Sasi --format mp3 --location /run/media/aj/AURA
 ```
 
 * `name` is what you will call the device in muco
-* `format` can be a list of supported formats. Currently mp3, flac, wma, aac are supported
+* `format` can be a list of supported formats. Currently mp3 and flac transcoding are supported.
 * `location` is the path where it will be mounted on your system.
 
 You can add any number of device like this.
 
 Now all you need to do, is:
 ```
-muco device sync
+muco sync
 ```
 
 # Todo
 
-At the moment this works only on Linux based OS. I have no intention of addding windows support.
-However, if you can, please do so and send a patch or a pull request.
-
-Other features to be added:
-
-* Caching for audio trascoding
-* Add logging framework instead of println! for debugging
+At the moment this works only on Linux based OS. I have no intention of addding windows support, nor will I take patches for windows support. Stay away crapposoft!
 

@@ -1,13 +1,19 @@
 [package]
 name = "muco"
 version = "0.1.0"
-authors = ["Aurabindo J <mail@aurabindo.in>"]
+authors = ["Aurabindo Jayamohanan <mail@aurabindo.in>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-failure = "0.1.1"
-failure_derive = "0.1.1"
-serde = "1.0"
-serde_derive = "1.0"
-serde_yaml = "0.7"
-clap = "2.31"
-walkdir = "2.1"
+log = "0.4.8"
+failure = "0.1.5"
+clap = "2.33.0"
+xdg = "2.2.0"
+regex = "1.2.1"
+serde = {version = "1.0", features = ["derive"]}
+toml = "0.5.3"
+env_logger = "0.6.2"
+my-pretty-failure = "0.1.2"
+walkdir = "2.2.9"
