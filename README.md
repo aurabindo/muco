@@ -31,6 +31,13 @@ Now all you need to do, is:
 muco sync
 ```
 
+# Issues
+
+Please use [GitLab](https://gitlab.com/aurabindo-public/muco.git) for issues
+```
+https://gitlab.com/aurabindo-public/muco.git
+```
+
 # Todo
 
 At the moment this works only on Linux based OS. I have no intention of addding windows support, nor will I take patches for windows support. Stay away crapposoft!
