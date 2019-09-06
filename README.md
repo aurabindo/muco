@@ -17,7 +17,7 @@ muco library add -n library_name -l /path/to/library
 
 Now time to tell where muco will find your devices. You can only specify one supported format as of now: 
 ```
-muco device add --name Sasi --format mp3 --location /run/media/aj/AURA
+muco device add --name SandiskCar --format mp3 --location /run/media/aj/AURA
 ```
 
 * `name` is what you will call the device in muco
