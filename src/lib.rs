@@ -16,9 +16,8 @@
 
 use std::process::Command;
 
+use log::{error, debug};
 use failure::ResultExt;
-use log::{debug, error};
-use rayon::prelude::*;
 
 pub(crate) mod utils;
 
@@ -38,7 +37,7 @@ pub fn sync(_conf: &Config, dev: Vec<Device>, lib: Vec<Library>) -> Result<()> {
     for library in lib {
         let lib_base = library.location().clone();
 
-        library.source().into_par_iter().for_each(|(path, format)| {
+        library.source().into_iter().for_each(|(path, format)| {
             let stripped_lib_file = path.strip_prefix(&lib_base).ok();
 
             for dev in dev.iter() {
