@@ -12,7 +12,7 @@ use crate::utils::*;
 pub struct Device {
     name: String,
     location: PathBuf,
-    excludes: String,
+    excludes: Option<String>,
     format: Container,
     sources: HashMap<PathBuf, Container>,
 }
@@ -21,7 +21,7 @@ pub fn add(
     mut conf: Config,
     name: String,
     location: PathBuf,
-    exclude: String,
+    exclude: Option<String>,
     format: String,
 ) -> Result<()> {
     let format = Container::try_from(format.as_str())?;

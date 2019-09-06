@@ -89,7 +89,7 @@ fn main() {
                                 .short("e")
                                 .long("exclude")
                                 .takes_value(true)
-                                .multiple(false)
+                                .multiple(true)
                                 .required(false),
                         ),
                 )
@@ -134,7 +134,7 @@ fn handle_device(dev: &ArgMatches) -> Result<()> {
             let nam = m.value_of("name").unwrap().to_owned();
 
             let loc = PathBuf::from(m.value_of("location").unwrap_or(env!("PWD")));
-            let excl = m.value_of("exclude").unwrap_or("a^").to_owned();
+            let excl = m.value_of("exclude").map(|excl| excl.to_owned());
 
             let conf = muco::config::Config::get()?;
             muco::device::add(conf, nam, loc, excl, fmt)?;

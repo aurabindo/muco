@@ -11,7 +11,7 @@ use crate::media::Container;
 use crate::utils::*;
 
 pub type LibraryConf = Vec<(String, PathBuf)>;
-pub type DeviceConf = Vec<(String, PathBuf, String, Container)>;
+pub type DeviceConf = Vec<(String, PathBuf, Option<String>, Container)>;
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Config {
@@ -20,7 +20,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn add_device(&mut self, n: String, l: PathBuf, e: String, f: Container) -> Result<()> {
+    pub fn add_device(&mut self, n: String, l: PathBuf, e: Option<String>, f: Container) -> Result<()> {
         if self.devices.iter().any(|(_nam, loc, _excl, _f)| loc.eq(&l)) {
             error!("Device already configured at {}", l.display());
             Err(Kind::DuplicateDevice)?
